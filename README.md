@@ -4,7 +4,7 @@
 
 通过 protobuf + AFLplusplus 进行传统 ctf fuzz。
 
-请参考[这篇博文](https://kiprey.github.io) 来了解具体细节。
+请参考[这篇博文](https://kiprey.github.io/2021/09/protobuf_ctf_fuzz/) 来了解具体细节。
 
 ## 二、构建与运行
 
