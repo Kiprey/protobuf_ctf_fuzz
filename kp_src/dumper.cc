@@ -20,7 +20,8 @@ inline std::string slurp(const std::string& path) {
 
 extern "C" {
   void *afl_custom_init(void *afl, unsigned int seed);
-  size_t afl_custom_havoc_mutation(void *data, uint8_t *buf, size_t buf_size, uint8_t **out_buf, size_t max_size);
+  size_t afl_custom_fuzz(void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, 
+                         unsigned char *add_buf, size_t add_buf_size, size_t max_size);
   size_t afl_custom_post_process(void* data, uint8_t *buf, size_t buf_size, uint8_t **out_buf);
   void afl_custom_deinit(void *data);
 }
@@ -30,14 +31,17 @@ int main(int argc, char *argv[]) {
 
   if (argc == 2) {
     std::string data = slurp(argv[1]);
-    protobuf_mutator::libfuzzer::LoadProtoInput(true, (const uint8_t *)data.c_str(), data.size(), &msg);
+    if(!protobuf_mutator::libfuzzer::LoadProtoInput(true, (const uint8_t *)data.c_str(), data.size(), &msg)) {
+      printf("[afl_custom_post_process] LoadProtoInput Error\n");   
+      abort();
+    }
     
     // 测试变异逻辑
     void* init_data = afl_custom_init(nullptr, time(NULL));
     for(int i = 0; i < 30; i++) {
       uint8_t *out_buf = nullptr;
-      size_t new_size = afl_custom_havoc_mutation(init_data, (uint8_t*)data.c_str(), data.size(), 
-                                                  &out_buf, data.size() + 100);
+      size_t new_size = afl_custom_fuzz(init_data, (uint8_t*)data.c_str(), data.size(),
+                                                  &out_buf,  nullptr, 0, data.size() + 100);
       uint8_t *new_str = nullptr;
       size_t new_str_size = afl_custom_post_process(init_data, out_buf, new_size, &new_str);
       std::string new_str_str((char*)new_str, new_str_size);

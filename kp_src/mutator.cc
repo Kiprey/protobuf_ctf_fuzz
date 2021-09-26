@@ -82,8 +82,17 @@ extern "C" {
     return nullptr;
   }
   
-  size_t afl_custom_havoc_mutation(void *data, uint8_t *buf, size_t buf_size, uint8_t **out_buf, size_t max_size) {
+  void afl_custom_deinit(void *data) {
+    assert(!data);
+  }
+  
+  // afl_custom_fuzz
+  size_t afl_custom_fuzz(void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, 
+                         unsigned char *add_buf, size_t add_buf_size, size_t max_size) {
     #pragma unused (data)
+    #pragma unused (add_buf)
+    #pragma unused (add_buf_size)
+    
     static uint8_t *saved_buf = nullptr;
 
     assert(buf_size <= max_size);
@@ -115,16 +124,23 @@ extern "C" {
     static uint8_t *saved_buf = NULL;
 
     menuctf::ChoiceList msg;
-    // 如果加载失败
-    if (!protobuf_mutator::libfuzzer::LoadProtoInput(true, buf, buf_size, &msg)) {
-      printf("[afl_custom_post_process] LoadProtoInput Error\n");   
-      std::ofstream err_bin("err.bin");
-      err_bin.write((char*)(*out_buf), buf_size);
-
-      abort();
-    }
     std::stringstream stream;
-    ProtoToDataHelper(stream, msg);
+    // 如果加载成功
+    if (protobuf_mutator::libfuzzer::LoadProtoInput(true, buf, buf_size, &msg)) {
+      ProtoToDataHelper(stream, msg);
+    }
+    else {
+      // printf("[afl_custom_post_process] LoadProtoInput Error\n");   
+      // std::ofstream err_bin("err.bin");
+      // err_bin.write((char*)buf, buf_size);
+
+      // abort();
+
+      // 如果加载失败，则返回 Exit Choice
+      /// NOTE: 错误的变异 + 错误的 trim 将会导致 post process 加载失败，尤其是 trim 逻辑。
+      /// TODO: 由于默认的 trim 会破坏样例，因此需要手动实现一个 trim，这里实现了一个空 trim，不进行任何操作
+      ProtoToDataHelper(stream, menuctf::ExitChoice());
+    }
     const std::string str = stream.str();
 
     uint8_t *new_buf = (uint8_t *) realloc((void *)saved_buf, str.size());
@@ -138,8 +154,15 @@ extern "C" {
 
     return str.size();
   }
-  
-  void afl_custom_deinit(void *data) {
-    assert(!data);
+
+  int32_t  afl_custom_init_trim(void *data, uint8_t *buf, size_t buf_size) {
+    /// NOTE: disable trim
+    return 0;
   }
+  
+  size_t afl_custom_trim(void *data, uint8_t **out_buf) {
+    /// NOTE: unreachable
+    return 0;
+  }
+
 }
