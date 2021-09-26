@@ -1,0 +1,7 @@
+AFLplusplus/
+afl-libprotobuf-mutator/
+workdir/fuzz_output/
+target
+*.bin
+.vscode/
+**/*.o
