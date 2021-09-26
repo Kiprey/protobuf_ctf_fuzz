@@ -1,5 +1,5 @@
 #include "mutator.h"
-
+#include <fstream>
 #include <iostream>
 #include <unistd.h>
 
@@ -12,6 +12,7 @@
 #include "gen/out.pb.h"
 
 #include <algorithm>
+#include <random>
 #include <cstdlib>
 
 
@@ -72,9 +73,12 @@ DEFINE_BINARY_PROTO_FUZZER(const menuctf::ChoiceList &root) {
 
 // AFLPlusPlus interface
 extern "C" {
+  static std::default_random_engine engine_pro;
+  static std::uniform_int_distribution<unsigned int> dis(0, UINT32_MAX);
+
   void *afl_custom_init(void *afl, unsigned int seed) {
     #pragma unused (afl)
-    srand(seed);
+    engine_pro.seed(seed);
     return nullptr;
   }
   
@@ -97,7 +101,7 @@ extern "C" {
       new_buf,
       buf_size,
       max_size,
-      rand()
+      dis(engine_pro)
     );
     *out_buf = new_buf;
     return new_size;
@@ -113,9 +117,11 @@ extern "C" {
     menuctf::ChoiceList msg;
     // 如果加载失败
     if (!protobuf_mutator::libfuzzer::LoadProtoInput(true, buf, buf_size, &msg)) {
-      printf("[afl_custom_post_process] LoadProtoInput Error");   
-      *out_buf = buf;
-      return buf_size;
+      printf("[afl_custom_post_process] LoadProtoInput Error\n");   
+      std::ofstream err_bin("err.bin");
+      err_bin.write((char*)(*out_buf), buf_size);
+
+      abort();
     }
     std::stringstream stream;
     ProtoToDataHelper(stream, msg);

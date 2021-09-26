@@ -11,12 +11,13 @@ popd
 
 # 配置环境变量
 export AFL_CUSTOM_MUTATOR_ONLY=1
-export AFL_CUSTOM_MUTATOR_LIBRARY=`dirname $0`/afl-libprotobuf-mutator/libmutator.so
+export AFL_CUSTOM_MUTATOR_LIBRARY=$(pwd)/afl-libprotobuf-mutator/libmutator.so
 export AFL_USE_QASAN=1
 
 # 输出信息
-echo '================================================================================================='
-echo 'Just prepare fuzz_input and run:'
-echo '  `AFLplusplus/afl-fuzz -i ./fuzz_input -o ./fuzz_output -Q -- ./target <target_binary_path> @@`'
-echo 'to start fuzz!'
-echo '================================================================================================='
+echo '=========================================================================================================='
+echo 'Just prepare fuzz_input and run the command to start fuzz:                                                '
+echo '  AFLplusplus/afl-fuzz -i workdir/fuzz_input -o workdir/fuzz_output -Q -- ./target <target_binary_path> @@'
+echo '                                                                                                          '
+echo 'e.g.  AFLplusplus/afl-fuzz -i workdir/fuzz_input -o workdir/fuzz_output -Q -- ./target ./babyheap @@      '
+echo '=========================================================================================================='
