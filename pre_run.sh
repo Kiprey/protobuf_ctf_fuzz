@@ -17,7 +17,7 @@ export AFL_USE_QASAN=1
 # 输出信息
 echo '=========================================================================================================='
 echo 'Just prepare fuzz_input and run the command to start fuzz:                                                '
-echo '  AFLplusplus/afl-fuzz -i workdir/fuzz_input -o workdir/fuzz_output -Q -- ./target <target_binary_path> @@'
+echo '  AFLplusplus/afl-fuzz -i workdir/fuzz_input -o workdir/fuzz_output -Q -- <target_binary_path>            '
 echo '                                                                                                          '
-echo 'e.g.  AFLplusplus/afl-fuzz -i workdir/fuzz_input -o workdir/fuzz_output -Q -- ./target ./babyheap @@      '
+echo 'e.g.  AFLplusplus/afl-fuzz -i workdir/fuzz_input -o workdir/fuzz_output -Q -- ./babyheap                  '
 echo '=========================================================================================================='

@@ -26,6 +26,3 @@ popd
 pushd AFLplusplus
 make distrib
 popd
-
-# 构建中间程序
-gcc -O3 kp_src/target.c -o ./target
