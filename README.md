@@ -31,8 +31,8 @@ source ./pre_run.sh
 > 语料的准备，或许可以修改 `kp_src/dumper.cc` 并借助 `afl-libprotobuf-mutator/dumper` 来生成。
 
 ```bash
-# 此时工作目录为：protobuf_ctf_fuzz/workdir
-../AFLplusplus/afl-fuzz -i ./fuzz_input -o ./fuzz_output -Q -- ../target <CTF_path> @@
+# 此时工作目录为：protobuf_ctf_fuzz/
+AFLplusplus/afl-fuzz -i workdir/fuzz_input -o workdir/fuzz_output -Q -- <CTF_path>
 ```
 
 ## 三、例子
