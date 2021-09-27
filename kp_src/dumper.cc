@@ -36,6 +36,7 @@ int main(int argc, char *argv[]) {
       abort();
     }
     
+#if 0
     // 测试变异逻辑
     void* init_data = afl_custom_init(nullptr, time(NULL));
     for(int i = 0; i < 30; i++) {
@@ -48,6 +49,7 @@ int main(int argc, char *argv[]) {
       std::cout << i << ": " << new_str_str << std::endl;
     }
     afl_custom_deinit(init_data);
+#endif
   } else {
     // alloc 12 "[menuctf::AllocChoice]"
     {

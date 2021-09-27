@@ -79,11 +79,12 @@ extern "C" {
   void *afl_custom_init(void *afl, unsigned int seed) {
     #pragma unused (afl)
     engine_pro.seed(seed);
-    return nullptr;
+    // 不直接 return nullptr 是为了绕过 AFL++ 的 deinit 空指针检测
+    return (void*)-1;
   }
   
   void afl_custom_deinit(void *data) {
-    assert(!data);
+    assert(data == (void*)-1);
   }
   
   // afl_custom_fuzz
