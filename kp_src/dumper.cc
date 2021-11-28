@@ -9,6 +9,9 @@
 #include "gen/out.pb.h"
 
 #include "mutator.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <ctime>
 
 inline std::string slurp(const std::string& path) {
@@ -36,9 +39,15 @@ int main(int argc, char *argv[]) {
       abort();
     }
     
-#if 0
     // 测试变异逻辑
-    void* init_data = afl_custom_init(nullptr, time(NULL));
+    int rand_fd;
+    if((rand_fd = open("/dev/random", O_RDONLY)) < 0)
+        abort();
+    unsigned int seed;
+    read(rand_fd, &seed, sizeof(seed));
+    close(rand_fd);
+
+    void* init_data = afl_custom_init(nullptr, seed);
     for(int i = 0; i < 30; i++) {
       uint8_t *out_buf = nullptr;
       size_t new_size = afl_custom_fuzz(init_data, (uint8_t*)data.c_str(), data.size(),
@@ -46,10 +55,10 @@ int main(int argc, char *argv[]) {
       uint8_t *new_str = nullptr;
       size_t new_str_size = afl_custom_post_process(init_data, out_buf, new_size, &new_str);
       std::string new_str_str((char*)new_str, new_str_size);
-      std::cout << i << ": " << new_str_str << std::endl;
+      std::cout << i << " =============== " << std::endl;
+      std::cout << new_str_str << std::endl << std::endl;
     }
     afl_custom_deinit(init_data);
-#endif
   } else {
     // alloc 12 "[menuctf::AllocChoice]"
     {

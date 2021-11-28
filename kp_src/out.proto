@@ -16,14 +16,14 @@ package menuctf;
 message AllocChoice {
   required int32 choice_id = 1 [default=1];
   required int32 size = 2;
-  required string content = 3;
+  required bytes content = 3;
 }
 
 message UpdateChoice {
   required int32 choice_id = 1 [default=2];
   required int32 idx = 2;
   required int32 size = 3;
-  required string content = 4;
+  required bytes content = 4;
 }
 
 message DeleteChoice {

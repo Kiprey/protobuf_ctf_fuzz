@@ -10,6 +10,7 @@
 #include "libprotobuf-mutator/src/libfuzzer/libfuzzer_macro.h"
 
 #include "gen/out.pb.h"
+#include "libprotobuf-mutator/src/mutator.h"
 
 #include <algorithm>
 #include <random>
@@ -73,24 +74,22 @@ DEFINE_BINARY_PROTO_FUZZER(const menuctf::ChoiceList &root) {
 
 // AFLPlusPlus interface
 extern "C" {
-  static std::default_random_engine engine_pro;
-  static std::uniform_int_distribution<unsigned int> dis(0, UINT32_MAX);
-
   void *afl_custom_init(void *afl, unsigned int seed) {
     #pragma unused (afl)
-    engine_pro.seed(seed);
-    // 不直接 return nullptr 是为了绕过 AFL++ 的 deinit 空指针检测
-    return (void*)-1;
+
+    auto mutator = new protobuf_mutator::Mutator();
+    mutator->Seed(seed);
+    return mutator;
   }
   
   void afl_custom_deinit(void *data) {
-    assert(data == (void*)-1);
+    protobuf_mutator::Mutator *mutator = (protobuf_mutator::Mutator*)data;
+    delete mutator;
   }
   
   // afl_custom_fuzz
   size_t afl_custom_fuzz(void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, 
                          unsigned char *add_buf, size_t add_buf_size, size_t max_size) {
-    #pragma unused (data)
     #pragma unused (add_buf)
     #pragma unused (add_buf_size)
     
@@ -99,22 +98,27 @@ extern "C" {
     assert(buf_size <= max_size);
     
     uint8_t *new_buf = (uint8_t *) realloc((void *)saved_buf, max_size);
-    if (!new_buf) {
-      *out_buf = buf;
-      return buf_size;
-    }
+    if (!new_buf) 
+        abort();
     saved_buf = new_buf;
 
-    memcpy(new_buf, buf, buf_size);
+    // memcpy(new_buf, buf, buf_size);
 
-    size_t new_size = LLVMFuzzerCustomMutator(
-      new_buf,
-      buf_size,
-      max_size,
-      dis(engine_pro)
-    );
+    protobuf_mutator::Mutator *mutator = (protobuf_mutator::Mutator*)data;
+
+    menuctf::ChoiceList msg;
+    if (!protobuf_mutator::libfuzzer::LoadProtoInput(true, buf, buf_size, &msg))
+      abort();
+
+    // 不用合并两个 Message 的 CrossOver 函数，因为它的变异效果有亿点点拉胯
+    mutator->Mutate(&msg, max_size);
+    
+    std::string out_str;
+    msg.SerializePartialToString(&out_str);
+
+    memcpy(new_buf, out_str.c_str(), out_str.size());
     *out_buf = new_buf;
-    return new_size;
+    return out_str.size();
   }
 
   size_t afl_custom_post_process(void* data, uint8_t *buf, size_t buf_size, uint8_t **out_buf) {
@@ -127,21 +131,11 @@ extern "C" {
     menuctf::ChoiceList msg;
     std::stringstream stream;
     // 如果加载成功
-    if (protobuf_mutator::libfuzzer::LoadProtoInput(true, buf, buf_size, &msg)) {
+    if (protobuf_mutator::libfuzzer::LoadProtoInput(true, buf, buf_size, &msg))
       ProtoToDataHelper(stream, msg);
-    }
-    else {
-      // printf("[afl_custom_post_process] LoadProtoInput Error\n");   
-      // std::ofstream err_bin("err.bin");
-      // err_bin.write((char*)buf, buf_size);
-
-      // abort();
-
-      // 如果加载失败，则返回 Exit Choice
-      /// NOTE: 错误的变异 + 错误的 trim 将会导致 post process 加载失败，尤其是 trim 逻辑。
-      /// TODO: 由于默认的 trim 会破坏样例，因此需要手动实现一个 trim，这里实现了一个空 trim，不进行任何操作
-      ProtoToDataHelper(stream, menuctf::ExitChoice());
-    }
+    else
+      // 必须保证成功
+      abort();
     const std::string str = stream.str();
 
     uint8_t *new_buf = (uint8_t *) realloc((void *)saved_buf, str.size());
