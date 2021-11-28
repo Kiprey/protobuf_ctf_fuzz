@@ -14,30 +14,30 @@ package menuctf;
 
 // [START messages]
 message AllocChoice {
-  required int32 choice_id = 1 [default=1];
+//required int32 choice_id = 1 [default=1];
   required int32 size = 2;
   required bytes content = 3;
 }
 
 message UpdateChoice {
-  required int32 choice_id = 1 [default=2];
+//required int32 choice_id = 1 [default=2];
   required int32 idx = 2;
   required int32 size = 3;
   required bytes content = 4;
 }
 
 message DeleteChoice {
-  required int32 choice_id = 1 [default=3];
+//required int32 choice_id = 1 [default=3];
   required int32 idx = 2;
 }
 
 message ViewChoice {
-  required int32 choice_id = 1 [default=4];
+//required int32 choice_id = 1 [default=4];
   required int32 idx = 2;
 }
 
 message ExitChoice {
-  required int32 choice_id = 1 [default=5];
+//required int32 choice_id = 1 [default=5];
 }
 
 // Our address book file is just one of these.

@@ -38,7 +38,25 @@ void ProtoToDataHelper(std::stringstream &out, const google::protobuf::Message &
         }
       // 如果当前是某个子 choice
       } else if (refl->HasField(msg, field)) {
+        // 获取到某一个 choice 的 message
         const google::protobuf::Message &child = refl->GetMessage(msg, field);
+        
+        // 输出其 choice ID
+        std::string choice_typename = child.GetDescriptor()->name();
+        if(choice_typename == "AllocChoice")
+            out << "1 ";
+        else if(choice_typename == "UpdateChoice")
+            out << "2 ";
+        else if(choice_typename == "DeleteChoice")
+            out << "3 ";
+        else if(choice_typename == "ViewChoice")
+            out << "4 ";
+        else if(choice_typename == "ExitChoice")
+            out << "5 ";
+        else
+            abort();
+        
+        // 输出剩余的 field
         ProtoToDataHelper(out, child);
       }
     } 
